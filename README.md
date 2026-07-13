@@ -4,9 +4,20 @@
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/lionelresnik/command-center)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://lionelresnik.github.io/command-center/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://typescriptlang.org)
 [![MCP](https://img.shields.io/badge/MCP-Cursor_native-purple.svg)](https://modelcontextprotocol.io)
+
+---
+
+## Live demo
+
+Try Command Center with mock data — no install, read-only:
+
+**[https://lionelresnik.github.io/command-center/](https://lionelresnik.github.io/command-center/)**
+
+Built from the local `demo` branch (static export + sample workspace). The full app runs locally with SQLite and MCP.
 
 ---
 
