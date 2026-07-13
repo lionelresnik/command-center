@@ -114,7 +114,7 @@ export function Sidebar() {
             </div>
           </div>
 
-          <p className="text-xs text-yellow-400/60 uppercase tracking-[0.3em] mb-1">Command Center v2</p>
+          <p className="text-xs text-yellow-400/60 uppercase tracking-[0.3em] mb-1">Command Center</p>
           <h2 className="text-2xl font-black text-white mb-0.5">Built by</h2>
           <h1 className="text-3xl font-black bg-gradient-to-r from-yellow-400 to-yellow-200 bg-clip-text text-transparent mb-4">
             Lionel Resnik
@@ -172,7 +172,6 @@ export function Sidebar() {
         </div>
         <div className="leading-none">
           <p className="text-sm font-bold tracking-tight">Command Center</p>
-          <p className="text-[10px] font-medium text-blue-400/70 tracking-widest uppercase">v2</p>
         </div>
       </div>
 

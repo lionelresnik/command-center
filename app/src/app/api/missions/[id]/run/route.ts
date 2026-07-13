@@ -257,7 +257,7 @@ Produce a complete, high-quality artifact for your role now.`
             const summary = arts.map(a => `**${a.roleName}** (${a.type}):\n${a.content.slice(0, 300)}...`).join("\n\n---\n\n")
             jiraAddComment(
               mission.ticketId,
-              `Mission complete in Command Center v2.\n\nArtifacts (${arts.length} total):\n${summary}\n\nFull results: http://localhost:3000/missions/${id}`
+              `Mission complete in Command Center.\n\nArtifacts (${arts.length} total):\n${summary}\n\nFull results: http://localhost:3000/missions/${id}`
             ).catch(() => {})
           }
         }
