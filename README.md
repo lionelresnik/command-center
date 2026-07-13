@@ -1,4 +1,4 @@
-# 🎯 Command Center v2
+# 🎯 Command Center
 
 > **The AI Engineering Operating System** — run multi-agent missions, capture knowledge, manage crews, and ship faster.
 
