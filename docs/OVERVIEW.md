@@ -1,6 +1,6 @@
 # Command Center — Complete Documentation
 
-> An AI Engineering Operating System built for engineering teams using Cursor.
+> Mission control for AI engineering teams using Cursor.
 > Orchestrate multi-agent AI workflows, manage your knowledge base, and stay in flow.
 
 ---
@@ -24,7 +24,7 @@
 
 ## 1. What is Command Center? {#what}
 
-Command Center is a **local-first AI engineering OS** — a web dashboard + Cursor integration that lets you:
+Command Center is a **local-first AI mission control dashboard** — a web dashboard + Cursor integration that lets you:
 
 - Define **Missions**: a goal, a Jira ticket, a project, and a crew of AI agents to accomplish it
 - Watch AI agents (Architect, Backend Engineer, QA, Security Analyst, Docs) execute the mission step by step, producing real artifacts

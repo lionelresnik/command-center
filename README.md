@@ -1,6 +1,6 @@
 # 🎯 Command Center
 
-> **The AI Engineering Operating System** — run multi-agent missions, capture knowledge, manage crews, and ship faster.
+> **AI mission control for engineering teams** — run multi-agent missions, capture knowledge, manage crews, and ship faster.
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/lionelresnik/command-center)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -34,7 +34,7 @@ Command Center is a **local-first AI mission control dashboard** built for engin
 - **MCP integrations** — fires GitHub PRs, Jira comments, and Slack notifications on mission complete
 - Full **import/export** compatible with v1 CLI YAML files
 
-[![Command Center — AI Engineering Operating System](docs/screenshots/overview.png)](docs/screenshots/overview.png)
+[![Command Center — product overview](docs/screenshots/overview.png)](docs/screenshots/overview.png)
 
 ---
 

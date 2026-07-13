@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Command Center",
-  description: "AI Engineering OS — missions, teams, knowledge, @lu",
+  description: "AI mission control — missions, teams, knowledge, @lu",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
