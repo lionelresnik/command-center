@@ -7,6 +7,7 @@ import { useState, useEffect } from "react"
 import {
   LayoutDashboard,
   FolderOpen,
+  Layers,
   UsersRound,
   UserCog,
   Crosshair,
@@ -21,6 +22,7 @@ import { cn } from "@/lib/utils"
 
 const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/workspaces", label: "Workspaces", icon: Layers },
   { href: "/projects", label: "Projects", icon: FolderOpen },
   { href: "/crews", label: "Crews", icon: UsersRound },
   { href: "/roles", label: "Roles", icon: UserCog },

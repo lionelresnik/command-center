@@ -20,6 +20,19 @@ function runMigrations(sqlite: InstanceType<typeof Database>) {
     `ALTER TABLE projects ADD COLUMN agents_md_local TEXT`,
     `ALTER TABLE projects ADD COLUMN agents_md_github_pr INTEGER`,
     `ALTER TABLE projects ADD COLUMN agents_md_status TEXT DEFAULT 'local'`,
+    // Phase 5: Workspaces
+    `CREATE TABLE IF NOT EXISTS workspaces (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT,
+      color TEXT DEFAULT '#8b5cf6',
+      repo_paths TEXT DEFAULT '[]',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `ALTER TABLE projects ADD COLUMN workspace_id TEXT`,
+    `ALTER TABLE missions ADD COLUMN workspace_id TEXT`,
+    `ALTER TABLE knowledge_entries ADD COLUMN workspace_id TEXT`,
   ]
 
   for (const sql of migrations) {

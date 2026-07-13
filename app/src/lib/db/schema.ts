@@ -7,6 +7,18 @@ import {
   blob,
 } from "drizzle-orm/sqlite-core"
 
+// ─── Workspaces ──────────────────────────────────────────────────────────────
+
+export const workspaces = sqliteTable("workspaces", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  color: text("color").default("#8b5cf6"),
+  repoPaths: text("repo_paths", { mode: "json" }).$type<string[]>().default([]),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
+})
+
 // ─── Projects ────────────────────────────────────────────────────────────────
 
 export const projects = sqliteTable("projects", {
@@ -19,6 +31,7 @@ export const projects = sqliteTable("projects", {
   jiraProject: text("jira_project"),
   jiraUrl: text("jira_url"),
   slackChannel: text("slack_channel"),
+  workspaceId: text("workspace_id"),
   mcps: text("mcps", { mode: "json" }).$type<string[]>().default([]),
   agentsMdLocal: text("agents_md_local"),
   agentsMdGithubPr: integer("agents_md_github_pr"),
@@ -33,9 +46,8 @@ export const projects = sqliteTable("projects", {
 
 export const knowledgeEntries = sqliteTable("knowledge_entries", {
   id: text("id").primaryKey(),
-  projectId: text("project_id")
-    .notNull()
-    .references(() => projects.id, { onDelete: "cascade" }),
+  projectId: text("project_id").references(() => projects.id, { onDelete: "cascade" }),
+  workspaceId: text("workspace_id"),
   type: text("type", {
     enum: ["architecture", "pattern", "adr", "standard", "glossary", "database", "infrastructure", "logs", "services", "runbook", "other"],
   }).notNull(),
@@ -102,9 +114,8 @@ export const missions = sqliteTable("missions", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   goal: text("goal").notNull(),
-  projectId: text("project_id")
-    .notNull()
-    .references(() => projects.id),
+  projectId: text("project_id").references(() => projects.id),
+  workspaceId: text("workspace_id"),
   teamId: text("team_id").references(() => teams.id),
   ticketId: text("ticket_id"),
   ticketUrl: text("ticket_url"),

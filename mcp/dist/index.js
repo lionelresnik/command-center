@@ -694,6 +694,165 @@ server.tool("cc_answer_question", "Answer a question from an agent. The answer i
         };
     }
 });
+// ─── Tool: cc_open ────────────────────────────────────────────────────────────
+server.tool("cc_open", "Open or register the current repo as a Command Center project. Detects git remote automatically. Creates the project if it doesn't exist, optionally assigns it to a workspace.", {
+    repoPath: zod_1.z.string().optional().describe("Path to the repo. Defaults to current directory."),
+    workspaceName: zod_1.z.string().optional().describe("Workspace to assign this project to (creates if missing)."),
+    appUrl: zod_1.z.string().optional().describe("Command Center URL. Defaults to http://localhost:3000"),
+}, async ({ repoPath = process.cwd(), workspaceName, appUrl = "http://localhost:3000" }) => {
+    const { execSync } = await Promise.resolve().then(() => __importStar(require("child_process")));
+    let remoteUrl = "";
+    let owner = "";
+    let repo = "";
+    try {
+        remoteUrl = execSync("git remote get-url origin", { cwd: repoPath, encoding: "utf8" }).trim();
+        const match = remoteUrl.match(/[:/]([^/]+)\/([^/.]+?)(?:\.git)?$/);
+        if (match) {
+            owner = match[1];
+            repo = match[2];
+        }
+    }
+    catch {
+        return {
+            content: [{
+                    type: "text",
+                    text: `Could not detect git remote in ${repoPath}.\nMake sure you're in a git repo with an origin remote set.`,
+                }]
+        };
+    }
+    if (!fs.existsSync(DB_PATH)) {
+        return { content: [{ type: "text", text: `Database not found at ${DB_PATH}. Run the Command Center app first.` }] };
+    }
+    const db = new better_sqlite3_1.default(DB_PATH);
+    try {
+        // Check if project exists
+        let project = db.prepare(`SELECT * FROM projects WHERE github_owner = ? AND github_repo = ? LIMIT 1`).get(owner, repo);
+        if (!project) {
+            // Create via web app API
+            const res = await fetch(`${appUrl}/api/projects`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: repo, description: `${owner}/${repo}`, githubOwner: owner, githubRepo: repo }),
+            });
+            if (!res.ok) {
+                return { content: [{ type: "text", text: `Failed to create project: ${await res.text()}` }] };
+            }
+            project = await res.json();
+        }
+        // Handle workspace assignment
+        let workspaceMsg = "";
+        if (workspaceName) {
+            let ws = db.prepare(`SELECT * FROM workspaces WHERE name LIKE ? LIMIT 1`).get(`%${workspaceName}%`);
+            if (!ws) {
+                const wsRes = await fetch(`${appUrl}/api/workspaces`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: workspaceName, projectIds: [project.id] }),
+                });
+                ws = await wsRes.json();
+                workspaceMsg = `\nCreated workspace: **${workspaceName}**`;
+            }
+            else {
+                await fetch(`${appUrl}/api/workspaces/${ws.id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ addProjectIds: [project.id] }),
+                });
+                workspaceMsg = `\nAssigned to workspace: **${ws.name}**`;
+            }
+        }
+        // Get KB summary
+        const kbCount = db.prepare(`SELECT COUNT(*) as c FROM knowledge_entries WHERE project_id = ?`).get(project.id).c;
+        const missionCount = db.prepare(`SELECT COUNT(*) as c FROM missions WHERE project_id = ?`).get(project.id).c;
+        const lines = [
+            `✅ Project ready: **${repo}**`,
+            `**ID:** \`${project.id}\`  |  **Repo:** ${owner}/${repo}`,
+            workspaceMsg,
+            ``,
+            `**Knowledge entries:** ${kbCount}`,
+            `**Missions:** ${missionCount}`,
+            ``,
+            `Web UI: ${appUrl}/projects/${project.id}`,
+            ``,
+            `You can now:`,
+            `- "create mission: <goal>, project ${repo}"`,
+            `- "search knowledge for <topic>"`,
+            `- "add todo: <task>"`,
+        ];
+        return { content: [{ type: "text", text: lines.filter(Boolean).join("\n") }] };
+    }
+    finally {
+        db.close();
+    }
+});
+// ─── Tool: cc_list_workspaces ─────────────────────────────────────────────────
+server.tool("cc_list_workspaces", "List all workspaces with their projects.", {}, async () => {
+    const db = getDb();
+    try {
+        const wsList = db.prepare(`SELECT * FROM workspaces ORDER BY name`).all();
+        const projects = db.prepare(`SELECT id, name, github_owner, github_repo, workspace_id, color FROM projects`).all();
+        if (wsList.length === 0) {
+            return { content: [{ type: "text", text: "No workspaces yet. Use cc_open with a workspaceName to create one." }] };
+        }
+        const lines = wsList.map(ws => {
+            const wsProjects = projects.filter(p => p.workspace_id === ws.id);
+            return [
+                `### ${ws.name} \`${ws.id}\``,
+                ws.description ? String(ws.description) : "",
+                `**Projects (${wsProjects.length}):**`,
+                wsProjects.length === 0
+                    ? "_none_"
+                    : wsProjects.map(p => `- ${p.name}${p.github_owner ? ` (${p.github_owner}/${p.github_repo})` : ""}`).join("\n"),
+            ].filter(Boolean).join("\n");
+        });
+        const unassigned = projects.filter(p => !p.workspace_id);
+        if (unassigned.length > 0) {
+            lines.push(`\n### Unassigned projects (${unassigned.length})\n${unassigned.map(p => `- ${p.name}`).join("\n")}`);
+        }
+        return { content: [{ type: "text", text: `# Workspaces (${wsList.length})\n\n` + lines.join("\n\n---\n\n") }] };
+    }
+    finally {
+        db.close();
+    }
+});
+// ─── Tool: cc_create_workspace ────────────────────────────────────────────────
+server.tool("cc_create_workspace", "Create a new workspace and optionally assign existing projects to it.", {
+    name: zod_1.z.string().describe("Workspace name"),
+    description: zod_1.z.string().optional().describe("Short description"),
+    projectNames: zod_1.z.array(zod_1.z.string()).optional().describe("Project names to add (partial match)"),
+    appUrl: zod_1.z.string().optional().describe("Command Center URL. Defaults to http://localhost:3000"),
+}, async ({ name, description, projectNames = [], appUrl = "http://localhost:3000" }) => {
+    const db = new better_sqlite3_1.default(DB_PATH);
+    try {
+        const projectIds = [];
+        for (const pname of projectNames) {
+            const p = db.prepare(`SELECT id, name FROM projects WHERE name LIKE ? LIMIT 1`).get(`%${pname}%`);
+            if (p)
+                projectIds.push(p.id);
+        }
+        const res = await fetch(`${appUrl}/api/workspaces`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, description, projectIds }),
+        });
+        const ws = await res.json();
+        if (!res.ok)
+            return { content: [{ type: "text", text: `Error: ${ws.error}` }] };
+        return {
+            content: [{
+                    type: "text",
+                    text: [
+                        `✅ Workspace created: **${name}** \`${ws.id}\``,
+                        description ? description : "",
+                        projectIds.length > 0 ? `\nProjects added: ${projectNames.join(", ")}` : "\nNo projects assigned yet — use cc_open to add repos.",
+                    ].filter(Boolean).join("\n"),
+                }]
+        };
+    }
+    finally {
+        db.close();
+    }
+});
 // ─── Tool: cc_export ─────────────────────────────────────────────────────────
 server.tool("cc_export", "Export Command Center data as clean markdown — ready to paste into Claude.ai, ChatGPT, or any AI chat. Exports knowledge base, missions, and todos for a project (or everything).", {
     projectId: zod_1.z.string().optional().describe("Project ID to export. Omit to export all projects."),
