@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Save, Zap, Key, Terminal, Database, CheckCircle2, Loader2, GitBranch, MessageSquare, Ticket, Upload, Download, FileJson, Archive, AlertTriangle } from "lucide-react"
+import { Save, Zap, Key, Terminal, Database, CheckCircle2, Loader2, GitBranch, MessageSquare, Ticket, Upload, Download, FileJson, Archive, AlertTriangle, Copy, Check, Plug } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,11 +28,21 @@ const providers = [
 
 type Settings = Record<string, string>
 
+type McpStatus = {
+  dbExists: boolean
+  mcpBuilt: boolean
+  mcpPath: string
+  config: string
+  toolCount: number
+}
+
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [mcpStatus, setMcpStatus] = useState<McpStatus | null>(null)
+  const [configCopied, setConfigCopied] = useState(false)
 
   // Import/export state
   const [importing, setImporting] = useState(false)
@@ -40,11 +50,22 @@ export default function SettingsPage() {
   const [dragOver, setDragOver] = useState(false)
 
   useEffect(() => {
-    fetch("/api/settings").then(r => r.json()).then((d: Settings) => {
+    Promise.all([
+      fetch("/api/settings").then(r => r.json()),
+      fetch("/api/mcp/status").then(r => r.json()).catch(() => null),
+    ]).then(([d, mcp]) => {
       setSettings(d)
+      setMcpStatus(mcp)
       setLoading(false)
     })
   }, [])
+
+  const copyMcpConfig = async () => {
+    if (!mcpStatus?.config) return
+    await navigator.clipboard.writeText(mcpStatus.config)
+    setConfigCopied(true)
+    setTimeout(() => setConfigCopied(false), 2000)
+  }
 
   const set = (key: string, value: string) => setSettings(prev => ({ ...prev, [key]: value }))
 
@@ -211,6 +232,64 @@ export default function SettingsPage() {
               }
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      {/* Cursor MCP */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Plug className="h-4 w-4 text-primary" />
+            Cursor MCP Server
+          </CardTitle>
+          <CardDescription>Native integration — query missions, knowledge, and todos from Cursor chat</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="rounded-md border p-3 space-y-1">
+              <p className="text-muted-foreground">Database</p>
+              <div className="flex items-center gap-2">
+                {mcpStatus?.dbExists
+                  ? <Badge variant="success">Connected</Badge>
+                  : <Badge variant="destructive">Not found</Badge>}
+                <span className="text-muted-foreground font-mono text-[10px]">~/.command-center/cc.db</span>
+              </div>
+            </div>
+            <div className="rounded-md border p-3 space-y-1">
+              <p className="text-muted-foreground">MCP server built</p>
+              <div className="flex items-center gap-2">
+                {mcpStatus?.mcpBuilt
+                  ? <Badge variant="success">Ready</Badge>
+                  : <Badge variant="warning">Not built</Badge>}
+                <span className="text-muted-foreground">{mcpStatus?.toolCount ?? 17} tools</span>
+              </div>
+            </div>
+          </div>
+
+          {!mcpStatus?.mcpBuilt && (
+            <div className="rounded-md border border-yellow-500/30 bg-yellow-500/5 px-3 py-2 text-xs text-muted-foreground">
+              Build the MCP server first: <code className="font-mono">cd mcp && npm install && npm run build</code>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Add to ~/.cursor/mcp.json</p>
+            <pre className="rounded-md border bg-muted/30 p-3 text-[11px] font-mono overflow-x-auto whitespace-pre-wrap">
+              {mcpStatus?.config ?? `{
+  "mcpServers": {
+    "command-center": {
+      "command": "node",
+      "args": ["/path/to/command-center/mcp/dist/index.js"]
+    }
+  }
+}`}
+            </pre>
+            <Button variant="outline" size="sm" className="gap-2 h-8 text-xs" onClick={copyMcpConfig}>
+              {configCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              {configCopied ? "Copied!" : "Copy config"}
+            </Button>
+            <p className="text-[11px] text-muted-foreground">Restart Cursor after saving. Tools appear in every chat session.</p>
+          </div>
         </CardContent>
       </Card>
 

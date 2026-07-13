@@ -13,7 +13,7 @@ export async function GET(
     const [artifactList, questions, project] = await Promise.all([
       getMissionArtifacts(id),
       getMissionQuestions(id),
-      getProject(mission.projectId),
+      mission.projectId ? getProject(mission.projectId) : Promise.resolve(null),
     ])
 
     const projectContext = project ? {

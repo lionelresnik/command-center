@@ -70,10 +70,10 @@ export async function POST(
   ).join("\n\n")
 
   // Fetch relevant knowledge
-  const kb = await getKnowledgeEntries(mission.projectId)
+  const kb = await getKnowledgeEntries(mission.projectId ?? undefined)
   const kbContext = kb.slice(0, 8).map(k => `[KB:${k.type}] ${k.title}: ${k.content.slice(0, 300)}`).join("\n")
 
-  const project = await getProject(mission.projectId)
+  const project = mission.projectId ? await getProject(mission.projectId) : null
 
   const behaviorInstruction = mission.agentBehavior === "assume_and_document"
     ? "When uncertain, make a clear assumption and document it. Do NOT ask questions — keep moving."
@@ -99,7 +99,7 @@ You are the ${nextTask.roleName}. Execute your part of this mission now.`
       model,
       system: systemPrompt,
       prompt: userPrompt,
-      maxTokens: role.maxTokens ?? 4096,
+      maxOutputTokens: role.maxTokens ?? 4096,
     })
 
     const fullContent = result.text
@@ -134,8 +134,8 @@ You are the ${nextTask.roleName}. Execute your part of this mission now.`
     }
 
     // Mark task done
-    const tokensIn = result.usage?.promptTokens ?? 0
-    const tokensOut = result.usage?.completionTokens ?? 0
+    const tokensIn = result.usage?.inputTokens ?? 0
+    const tokensOut = result.usage?.outputTokens ?? 0
     const costUsd = (tokensIn * 0.000003) + (tokensOut * 0.000015)
 
     const finalGraph = updatedGraph.map(t =>

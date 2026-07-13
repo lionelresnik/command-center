@@ -14,8 +14,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    if (!body.goal || !body.projectId) {
-      return NextResponse.json({ error: "goal and projectId required" }, { status: 400 })
+    if (!body.goal) {
+      return NextResponse.json({ error: "goal required" }, { status: 400 })
+    }
+    if (!body.projectId && !body.workspaceId && !(Array.isArray(body.projectIds) && body.projectIds.length > 0)) {
+      return NextResponse.json({ error: "projectId, projectIds, or workspaceId required" }, { status: 400 })
     }
     const mission = await createMission(body)
     return NextResponse.json(mission, { status: 201 })

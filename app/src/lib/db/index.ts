@@ -8,6 +8,37 @@ import * as schema from "./schema"
 const DATA_DIR = path.join(os.homedir(), ".command-center")
 const DB_PATH = path.join(DATA_DIR, "cc.db")
 
+/** Rebuild knowledge_entries so project_id is nullable (workspace-level entries) */
+function migrateKnowledgeProjectIdNullable(sqlite: InstanceType<typeof Database>) {
+  const cols = sqlite.prepare("PRAGMA table_info(knowledge_entries)").all() as Array<{ name: string; notnull: number }>
+  const projectCol = cols.find(c => c.name === "project_id")
+  if (!projectCol || projectCol.notnull === 0) return
+
+  sqlite.exec(`
+    CREATE TABLE knowledge_entries_mig (
+      id TEXT PRIMARY KEY NOT NULL,
+      project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+      workspace_id TEXT,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      confidence TEXT DEFAULT 'confirmed',
+      source_mission_id TEXT,
+      source_file TEXT,
+      embedding BLOB,
+      tags TEXT DEFAULT '[]',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    INSERT INTO knowledge_entries_mig
+      SELECT id, project_id, workspace_id, type, title, content, confidence,
+             source_mission_id, source_file, embedding, tags, created_at, updated_at
+      FROM knowledge_entries;
+    DROP TABLE knowledge_entries;
+    ALTER TABLE knowledge_entries_mig RENAME TO knowledge_entries;
+  `)
+}
+
 /** Run additive migrations — safe to call on every startup */
 function runMigrations(sqlite: InstanceType<typeof Database>) {
   const migrations = [
@@ -33,6 +64,7 @@ function runMigrations(sqlite: InstanceType<typeof Database>) {
     `ALTER TABLE projects ADD COLUMN workspace_id TEXT`,
     `ALTER TABLE missions ADD COLUMN workspace_id TEXT`,
     `ALTER TABLE knowledge_entries ADD COLUMN workspace_id TEXT`,
+    `ALTER TABLE missions ADD COLUMN project_ids TEXT DEFAULT '[]'`,
   ]
 
   for (const sql of migrations) {
@@ -42,6 +74,8 @@ function runMigrations(sqlite: InstanceType<typeof Database>) {
       // "duplicate column name" or similar — already applied, skip silently
     }
   }
+
+  migrateKnowledgeProjectIdNullable(sqlite)
 }
 
 let _db: ReturnType<typeof drizzle> | null = null

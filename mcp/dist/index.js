@@ -493,30 +493,60 @@ server.tool("cc_get_project_context", "Get full context for a project: knowledge
     }
 });
 // ─── Tool: cc_create_mission ──────────────────────────────────────────────────
-server.tool("cc_create_mission", "Create a new mission in Command Center. Finds project and crew by name, builds the task graph, and saves to DB.", {
+server.tool("cc_create_mission", "Create a new mission in Command Center. Finds project and crew by name, builds the task graph, and saves to DB. Optionally scope to a workspace.", {
     goal: zod_1.z.string().describe("What the mission should accomplish"),
-    project: zod_1.z.string().describe("Project name (partial match OK)"),
+    project: zod_1.z.string().optional().describe("Project name (partial match OK). Required unless workspace is set."),
     crew: zod_1.z.string().describe("Crew/team name (partial match OK)"),
+    workspace: zod_1.z.string().optional().describe("Workspace name (partial match OK). Uses all projects in workspace."),
     name: zod_1.z.string().optional().describe("Mission name. Defaults to first 60 chars of goal."),
     behavior: zod_1.z.enum(["assume_and_document", "ask_me", "async"]).optional()
         .describe("How agents handle uncertainty. Defaults to assume_and_document."),
     ticketId: zod_1.z.string().optional().describe("Jira/GitHub ticket ID e.g. PROJ-123"),
-}, async ({ goal, project, crew, name, behavior = "assume_and_document", ticketId }) => {
+}, async ({ goal, project, crew, workspace, name, behavior = "assume_and_document", ticketId }) => {
     if (!fs.existsSync(DB_PATH)) {
         return { content: [{ type: "text", text: `Database not found at ${DB_PATH}` }] };
     }
     const db = new better_sqlite3_1.default(DB_PATH);
     try {
-        // Find project
-        const projectRow = db.prepare(`SELECT id, name FROM projects WHERE name LIKE ? LIMIT 1`).get(`%${project}%`);
-        if (!projectRow) {
-            const all = db.prepare(`SELECT id, name FROM projects`).all();
-            return {
-                content: [{
-                        type: "text",
-                        text: `No project matching "${project}" found.\n\nAvailable:\n` + all.map(p => `- \`${p.id}\` ${p.name}`).join("\n"),
-                    }]
-            };
+        let projectRow;
+        let workspaceRow;
+        let projectIds = [];
+        if (workspace) {
+            workspaceRow = db.prepare(`SELECT id, name FROM workspaces WHERE name LIKE ? LIMIT 1`).get(`%${workspace}%`);
+            if (!workspaceRow) {
+                const all = db.prepare(`SELECT id, name FROM workspaces`).all();
+                return {
+                    content: [{
+                            type: "text",
+                            text: `No workspace matching "${workspace}" found.\n\nAvailable:\n` + all.map(w => `- \`${w.id}\` ${w.name}`).join("\n"),
+                        }]
+                };
+            }
+            const wsProjects = db.prepare(`SELECT id, name FROM projects WHERE workspace_id = ?`).all(workspaceRow.id);
+            projectIds = wsProjects.map(p => p.id);
+            if (project) {
+                projectRow = wsProjects.find(p => p.name.toLowerCase().includes(project.toLowerCase()));
+            }
+            projectRow = projectRow ?? wsProjects[0];
+            if (!projectRow && projectIds.length === 0) {
+                return { content: [{ type: "text", text: `Workspace "${workspaceRow.name}" has no projects. Add projects first.` }] };
+            }
+        }
+        else if (project) {
+            projectRow = db.prepare(`SELECT id, name FROM projects WHERE name LIKE ? LIMIT 1`).get(`%${project}%`);
+            if (!projectRow) {
+                const all = db.prepare(`SELECT id, name FROM projects`).all();
+                return {
+                    content: [{
+                            type: "text",
+                            text: `No project matching "${project}" found.\n\nAvailable:\n` + all.map(p => `- \`${p.id}\` ${p.name}`).join("\n"),
+                        }]
+                };
+            }
+            projectIds = [projectRow.id];
+        }
+        else {
+            return { content: [{ type: "text", text: "Provide either `project` or `workspace`." }] };
         }
         // Find crew
         const crewRow = db.prepare(`SELECT id, name, members, leader_id FROM teams WHERE name LIKE ? LIMIT 1`).get(`%${crew}%`);
@@ -548,14 +578,15 @@ server.tool("cc_create_mission", "Create a new mission in Command Center. Finds 
         const missionId = `m_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
         const missionName = name ?? goal.slice(0, 60);
         db.prepare(`
-        INSERT INTO missions (id, name, goal, project_id, team_id, ticket_id, agent_behavior, status, task_graph, progress_percent, tokens_input, tokens_output, tokens_total, estimated_cost_usd, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, 0, 0, 0, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `).run(missionId, missionName, goal, projectRow.id, crewRow.id, ticketId ?? null, behavior, JSON.stringify(taskGraph));
+        INSERT INTO missions (id, name, goal, project_id, workspace_id, project_ids, team_id, ticket_id, agent_behavior, status, task_graph, progress_percent, tokens_input, tokens_output, tokens_total, estimated_cost_usd, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 0, 0, 0, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `).run(missionId, missionName, goal, projectRow?.id ?? null, workspaceRow?.id ?? null, JSON.stringify(projectIds), crewRow.id, ticketId ?? null, behavior, JSON.stringify(taskGraph));
         const lines = [
             `✅ Mission created!`,
             ``,
             `**${missionName}** \`${missionId}\``,
-            `**Project:** ${projectRow.name}  |  **Crew:** ${crewRow.name}  |  **Behavior:** ${behavior}`,
+            `**Project:** ${projectRow?.name ?? "—"}  |  **Crew:** ${crewRow.name}  |  **Behavior:** ${behavior}`,
+            workspaceRow ? `**Workspace:** ${workspaceRow.name} (${projectIds.length} project${projectIds.length !== 1 ? "s" : ""})` : "",
             ticketId ? `**Ticket:** ${ticketId}` : "",
             ``,
             `**Task graph (${taskGraph.length} roles):**`,

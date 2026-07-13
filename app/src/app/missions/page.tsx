@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import {
   Plus, CheckCircle2, Clock, AlertCircle, Search, X, Crosshair,
-  ExternalLink, Hash,
+  ExternalLink, Hash, Layers,
 } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
@@ -45,6 +45,8 @@ type Mission = {
   ticketId: string | null
   taskGraph: TaskNode[] | null
   projectId: string
+  workspaceId?: string | null
+  projectIds?: string[] | null
   createdAt: string | null
   estimatedCostUsd: number | null
   tokensTotal: number | null
@@ -55,6 +57,8 @@ type Project = {
   jiraUrl: string | null
   slackChannel: string | null
 }
+
+type Workspace = { id: string; name: string; color: string; projects: Array<{ id: string }> }
 
 const STATUS_FILTERS: { id: MissionStatus | "all"; label: string }[] = [
   { id: "all",     label: "All" },
@@ -68,8 +72,10 @@ const STATUS_FILTERS: { id: MissionStatus | "all"; label: string }[] = [
 export default function MissionsPage() {
   const [missions, setMissions] = useState<Mission[]>([])
   const [projects, setProjects] = useState<Project[]>([])
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<MissionStatus | "all">("all")
+  const [workspaceFilter, setWorkspaceFilter] = useState<string>("all")
   const [projectFilter, setProjectFilter] = useState<string>("all")
   const [loading, setLoading] = useState(true)
 
@@ -77,12 +83,23 @@ export default function MissionsPage() {
     Promise.all([
       fetch("/api/missions").then(r => r.json()),
       fetch("/api/projects").then(r => r.json()),
-    ]).then(([m, p]) => {
+      fetch("/api/workspaces").then(r => r.json()),
+    ]).then(([m, p, w]) => {
       setMissions(m)
       setProjects(p)
+      setWorkspaces(w)
       setLoading(false)
     })
   }, [])
+
+  // Projects visible in project filter — limited to selected workspace
+  const wsProjectIds = workspaceFilter !== "all"
+    ? new Set((workspaces.find(w => w.id === workspaceFilter)?.projects ?? []).map(p => p.id))
+    : null
+
+  const visibleProjects = wsProjectIds
+    ? projects.filter(p => wsProjectIds.has(p.id))
+    : projects
 
   const filtered = missions.filter(m => {
     const matchSearch =
@@ -91,14 +108,17 @@ export default function MissionsPage() {
       m.goal.toLowerCase().includes(search.toLowerCase()) ||
       (m.ticketId ?? "").toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === "all" || m.status === statusFilter
+    const matchWorkspace = workspaceFilter === "all"
+      || m.workspaceId === workspaceFilter
+      || (wsProjectIds != null && wsProjectIds.has(m.projectId))
     const matchProject = projectFilter === "all" || m.projectId === projectFilter
-    return matchSearch && matchStatus && matchProject
+    return matchSearch && matchStatus && matchWorkspace && matchProject
   })
 
   const projectById = Object.fromEntries(projects.map(p => [p.id, p]))
 
-  const hasFilters = search || statusFilter !== "all" || projectFilter !== "all"
-  const clearFilters = () => { setSearch(""); setStatusFilter("all"); setProjectFilter("all") }
+  const hasFilters = search || statusFilter !== "all" || workspaceFilter !== "all" || projectFilter !== "all"
+  const clearFilters = () => { setSearch(""); setStatusFilter("all"); setWorkspaceFilter("all"); setProjectFilter("all") }
 
   return (
     <div className="p-6 space-y-5">
@@ -136,14 +156,30 @@ export default function MissionsPage() {
             />
           </div>
 
+          {/* Workspace filter */}
+          {workspaces.length > 0 && (
+            <select
+              value={workspaceFilter}
+              onChange={e => { setWorkspaceFilter(e.target.value); setProjectFilter("all") }}
+              className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm min-w-[140px]"
+            >
+              <option value="all">All workspaces</option>
+              {workspaces.map(w => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
+          )}
+
           {/* Project filter */}
           <select
             value={projectFilter}
             onChange={e => setProjectFilter(e.target.value)}
             className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm min-w-[140px]"
           >
-            <option value="all">All projects</option>
-            {projects.map(p => (
+            <option value="all">{workspaceFilter !== "all" ? "All in workspace" : "All projects"}</option>
+            {visibleProjects.map(p => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>

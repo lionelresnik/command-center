@@ -116,6 +116,7 @@ export const missions = sqliteTable("missions", {
   goal: text("goal").notNull(),
   projectId: text("project_id").references(() => projects.id),
   workspaceId: text("workspace_id"),
+  projectIds: text("project_ids", { mode: "json" }).$type<string[]>().default([]),
   teamId: text("team_id").references(() => teams.id),
   ticketId: text("ticket_id"),
   ticketUrl: text("ticket_url"),

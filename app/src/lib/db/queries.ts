@@ -11,7 +11,7 @@ function safeJson<T>(value: unknown, fallback: T): T {
 
 const {
   projects, missions, knowledgeEntries, artifacts,
-  missionQuestions, todos, dailyLogs, roles, teams,
+  missionQuestions, todos, dailyLogs, roles, teams, workspaces,
 } = schema
 
 // ─── Projects ────────────────────────────────────────────────────────────────
@@ -61,19 +61,30 @@ export async function getMission(id: string) {
 }
 
 export async function createMission(data: {
-  name: string
+  name?: string
   goal: string
-  projectId: string
+  projectId?: string
+  workspaceId?: string
+  projectIds?: string[]
   teamId?: string
   ticketId?: string
   agentBehavior?: "assume_and_document" | "ask_me" | "async"
 }) {
   const id = nanoid()
+  const projectIds = data.projectIds?.length ? data.projectIds : data.projectId ? [data.projectId] : []
+  const projectId = data.projectId ?? projectIds[0]
+
+  if (!projectId && !data.workspaceId) {
+    throw new Error("projectId, projectIds, or workspaceId required")
+  }
+
   await getDb().insert(missions).values({
     id,
     name: data.name || data.goal.slice(0, 60),
     goal: data.goal,
-    projectId: data.projectId,
+    projectId: projectId ?? null,
+    workspaceId: data.workspaceId ?? null,
+    projectIds,
     teamId: data.teamId,
     ticketId: data.ticketId,
     agentBehavior: data.agentBehavior ?? "assume_and_document",
@@ -152,7 +163,8 @@ export async function getKnowledgeEntries(projectId?: string) {
 }
 
 export async function createKnowledgeEntry(data: {
-  projectId: string
+  projectId?: string
+  workspaceId?: string
   type: "architecture" | "pattern" | "adr" | "standard" | "glossary" | "database" | "infrastructure" | "logs" | "services" | "runbook" | "other"
   title: string
   content: string
@@ -160,10 +172,22 @@ export async function createKnowledgeEntry(data: {
   sourceMissionId?: string
   tags?: string[]
 }) {
+  if (!data.projectId && !data.workspaceId) {
+    throw new Error("projectId or workspaceId required")
+  }
   const id = nanoid()
   await getDb().insert(knowledgeEntries).values({ id, ...data })
   const rows = await getDb().select().from(knowledgeEntries).where(eq(knowledgeEntries.id, id))
   return rows[0]
+}
+
+export async function getWorkspaces() {
+  const rows = await getDb().select().from(workspaces).orderBy(workspaces.name)
+  const allProjects = await getDb().select().from(projects)
+  return rows.map(ws => ({
+    ...ws,
+    projects: allProjects.filter(p => p.workspaceId === ws.id),
+  }))
 }
 
 export async function updateKnowledgeEntry(id: string, data: Partial<typeof knowledgeEntries.$inferInsert>) {

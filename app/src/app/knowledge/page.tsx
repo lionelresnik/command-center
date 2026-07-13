@@ -15,11 +15,13 @@ type Confidence = "confirmed" | "assumed" | "investigating"
 
 type Entry = {
   id: string; title: string; type: KnowledgeType; content: string
-  confidence: Confidence; projectId: string; updatedAt: string | null
+  confidence: Confidence; projectId: string | null; workspaceId?: string | null
+  updatedAt: string | null
   sourceMissionId: string | null; tags: string[] | null
 }
 
-type Project = { id: string; name: string; color: string | null }
+type Project = { id: string; name: string; color: string | null; workspaceId?: string | null }
+type Workspace = { id: string; name: string; color: string; projects: Array<{ id: string }> }
 
 const typeColors: Record<KnowledgeType, string> = {
   architecture: "bg-blue-500/20 text-blue-400",
@@ -103,6 +105,11 @@ function EntryCard({ entry, project }: { entry: Entry & { _score?: number | null
                   <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: project.color ?? "#6b7280" }} />
                   <span className="text-xs text-muted-foreground">{project.name}</span>
                 </>
+              )}
+              {!project && entry.workspaceId && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Layers className="h-3 w-3" /> Workspace-wide
+                </span>
               )}
               {entry.sourceMissionId && <span className="text-xs text-muted-foreground">· from mission</span>}
               {entry.updatedAt && <span className="text-xs text-muted-foreground">· {entry.updatedAt.slice(0, 10)}</span>}
@@ -221,6 +228,8 @@ let activeProjectId_ref: string = "all"
 export default function KnowledgePage() {
   const [entries, setEntries] = useState<Entry[]>([])
   const [projects, setProjects] = useState<Project[]>([])
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([])
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | "all">("all")
   const [search, setSearch] = useState("")
   const [filterType, setFilterType] = useState<KnowledgeType | "">("")
   const [activeProjectId, setActiveProjectId] = useState<string | "all">("all")
@@ -240,6 +249,8 @@ export default function KnowledgePage() {
   const [newType, setNewType] = useState<KnowledgeType>("architecture")
   const [newConfidence, setNewConfidence] = useState<Confidence>("confirmed")
   const [newProjectId, setNewProjectId] = useState("")
+  const [newWorkspaceId, setNewWorkspaceId] = useState("")
+  const [newScope, setNewScope] = useState<"project" | "workspace">("project")
   const [newTags, setNewTags] = useState("")
   const [saving, setSaving] = useState(false)
 
@@ -257,15 +268,19 @@ export default function KnowledgePage() {
   const [editSaving, setEditSaving] = useState(false)
 
   const load = useCallback(async () => {
-    const [e, p] = await Promise.all([
+    const [e, p, w] = await Promise.all([
       fetch("/api/knowledge").then(r => r.json()),
       fetch("/api/projects").then(r => r.json()),
+      fetch("/api/workspaces").then(r => r.json()),
     ])
     setEntries(e)
     setProjects(p)
+    setWorkspaces(w)
+    setWorkspaces(w)
     if (p.length > 0 && !newProjectId) setNewProjectId(p[0].id)
+    if (w.length > 0 && !newWorkspaceId) setNewWorkspaceId(w[0].id)
     setLoading(false)
-  }, [newProjectId])
+  }, [newProjectId, newWorkspaceId])
 
   useEffect(() => { load() }, [load])
 
@@ -308,18 +323,30 @@ export default function KnowledgePage() {
 
   const projectById = Object.fromEntries(projects.map(p => [p.id, p]))
 
+  // Workspace-scoped project IDs
+  const wsProjectIds = activeWorkspaceId !== "all"
+    ? new Set((workspaces.find(w => w.id === activeWorkspaceId)?.projects ?? []).map(p => p.id))
+    : null
+
+  const visibleProjects = wsProjectIds
+    ? projects.filter(p => wsProjectIds.has(p.id))
+    : projects
+
   const filtered = semanticMode && semanticResults !== null
     ? semanticResults
     : entries.filter(e => {
         const matchSearch = !search || e.title.toLowerCase().includes(search.toLowerCase()) || e.content.toLowerCase().includes(search.toLowerCase())
         const matchType = !filterType || e.type === filterType
         const matchProject = activeProjectId === "all" || e.projectId === activeProjectId
-        return matchSearch && matchType && matchProject
+        const matchWorkspace = activeWorkspaceId === "all"
+          || e.workspaceId === activeWorkspaceId
+          || (e.projectId != null && wsProjectIds?.has(e.projectId))
+        return matchSearch && matchType && matchProject && matchWorkspace
       })
 
   // Group entries by project for "all" view
-  const grouped: { project: Project; entries: typeof filtered }[] = activeProjectId === "all" && !search && !semanticMode
-    ? projects
+  const grouped: { project: Project; entries: typeof filtered }[] = activeProjectId === "all" && activeWorkspaceId === "all" && !search && !semanticMode
+    ? visibleProjects
         .map(p => ({ project: p, entries: filtered.filter(e => e.projectId === p.id) }))
         .filter(g => g.entries.length > 0)
     : []
@@ -338,14 +365,24 @@ export default function KnowledgePage() {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newTitle || !newContent || !newProjectId) return
+    if (!newTitle || !newContent) return
+    if (newScope === "project" && !newProjectId) return
+    if (newScope === "workspace" && !newWorkspaceId) return
     setSaving(true)
     try {
       const tags = newTags.split(/[,\s]+/).map(t => t.trim().replace(/^#/, "")).filter(Boolean)
       await fetch("/api/knowledge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newTitle, content: newContent, type: newType, confidence: newConfidence, projectId: newProjectId, tags }),
+        body: JSON.stringify({
+          title: newTitle,
+          content: newContent,
+          type: newType,
+          confidence: newConfidence,
+          projectId: newScope === "project" ? newProjectId : undefined,
+          workspaceId: newScope === "workspace" ? newWorkspaceId : undefined,
+          tags,
+        }),
       })
       setNewTitle(""); setNewContent(""); setNewTags(""); setShowAdd(false)
       load()
@@ -440,13 +477,33 @@ export default function KnowledgePage() {
             <form onSubmit={handleAdd} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <Input placeholder="Title *" value={newTitle} onChange={e => setNewTitle(e.target.value)} required />
-                <select
-                  value={newProjectId}
-                  onChange={e => setNewProjectId(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    value={newScope}
+                    onChange={e => setNewScope(e.target.value as "project" | "workspace")}
+                    className="flex h-10 rounded-md border border-input bg-background px-2 py-2 text-sm w-28"
+                  >
+                    <option value="project">Project</option>
+                    <option value="workspace">Workspace</option>
+                  </select>
+                  {newScope === "project" ? (
+                    <select
+                      value={newProjectId}
+                      onChange={e => setNewProjectId(e.target.value)}
+                      className="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  ) : (
+                    <select
+                      value={newWorkspaceId}
+                      onChange={e => setNewWorkspaceId(e.target.value)}
+                      className="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      {workspaces.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                    </select>
+                  )}
+                </div>
               </div>
               <Textarea placeholder="Content — commands, connections, architecture notes, etc. *" value={newContent} onChange={e => setNewContent(e.target.value)} className="min-h-[80px]" required />
               <Input placeholder="Tags (comma separated) — optional" value={newTags} onChange={e => setNewTags(e.target.value)} className="text-xs" />
@@ -497,8 +554,48 @@ export default function KnowledgePage() {
         </div>
       )}
 
+      {/* Workspace tabs */}
+      {workspaces.length > 0 && (
+        <div className="flex items-center gap-1 overflow-x-auto pb-0.5 -mb-1">
+          <button
+            onClick={() => { setActiveWorkspaceId("all"); setActiveProjectId("all"); setCollapsedProjects(new Set()) }}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0",
+              activeWorkspaceId === "all"
+                ? "bg-secondary text-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+            )}
+          >
+            <Layers className="h-3 w-3" />
+            All workspaces
+          </button>
+          {workspaces.map(w => {
+            const count = entries.filter(e =>
+              e.workspaceId === w.id || w.projects.some(p => p.id === e.projectId)
+            ).length
+            if (count === 0) return null
+            return (
+              <button
+                key={w.id}
+                onClick={() => { setActiveWorkspaceId(w.id); setActiveProjectId("all") }}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0",
+                  activeWorkspaceId === w.id
+                    ? "bg-secondary text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                )}
+              >
+                <div className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: w.color }} />
+                {w.name}
+                <span className="ml-0.5 text-muted-foreground font-normal">({count})</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* Project tabs */}
-      {projects.length > 0 && (
+      {visibleProjects.length > 0 && (
         <div className="flex items-center gap-1 overflow-x-auto pb-0.5 -mb-1">
           <button
             onClick={() => { setActiveProjectId("all"); setCollapsedProjects(new Set()) }}
@@ -511,9 +608,9 @@ export default function KnowledgePage() {
           >
             <Layers className="h-3 w-3" />
             All projects
-            <span className="ml-0.5 text-muted-foreground font-normal">({entries.length})</span>
+            <span className="ml-0.5 text-muted-foreground font-normal">({filtered.length})</span>
           </button>
-          {projects.map(p => {
+          {visibleProjects.map(p => {
             const count = entries.filter(e => e.projectId === p.id).length
             if (count === 0) return null
             return (
@@ -626,7 +723,7 @@ export default function KnowledgePage() {
                 )
               })
             : filtered.map(entry => {
-                const project = projectById[entry.projectId]
+                const project = entry.projectId ? projectById[entry.projectId] : undefined
                 return <EntryCard key={entry.id} entry={entry} project={project} />
               })
           }

@@ -2,13 +2,13 @@ import Link from "next/link"
 import {
   Crosshair, Plus, CheckCircle2, Clock, AlertCircle, Brain,
   ArrowRight, AlertTriangle, ListTodo, Sparkles, DollarSign,
-  FolderOpen,
+  Layers,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { getMissions, getKnowledgeEntries, getTodos, getProjects } from "@/lib/db/queries"
+import { getMissions, getKnowledgeEntries, getTodos, getProjects, getWorkspaces } from "@/lib/db/queries"
 import { cn } from "@/lib/utils"
 
 type TaskNode = { id: string; roleName: string; status: string }
@@ -25,11 +25,12 @@ const statusConfig: Record<MissionStatus, { label: string; variant: string; colo
 }
 
 export default async function DashboardPage() {
-  const [missions, knowledge, todos, projects] = await Promise.all([
+  const [missions, knowledge, todos, projects, workspaces] = await Promise.all([
     getMissions(),
     getKnowledgeEntries(),
     getTodos(),
     getProjects(),
+    getWorkspaces(),
   ])
 
   const running   = missions.filter(m => m.status === "running")
@@ -44,6 +45,20 @@ export default async function DashboardPage() {
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
 
   const projectById = Object.fromEntries(projects.map(p => [p.id, p]))
+  const unassignedProjects = projects.filter(p => !p.workspaceId)
+
+  const countForProject = (projectId: string) => ({
+    missions: missions.filter(m => m.projectId === projectId || (m.projectIds as string[] | null)?.includes(projectId)).length,
+    knowledge: knowledge.filter(k => k.projectId === projectId).length,
+  })
+
+  const countForWorkspace = (ws: typeof workspaces[0]) => {
+    const ids = new Set(ws.projects.map(p => p.id))
+    return {
+      missions: missions.filter(m => m.workspaceId === ws.id || (m.projectId && ids.has(m.projectId))).length,
+      knowledge: knowledge.filter(k => k.workspaceId === ws.id || (k.projectId && ids.has(k.projectId))).length,
+    }
+  }
 
   const attentionItems = [
     ...assumed.map(k => ({
@@ -57,7 +72,7 @@ export default async function DashboardPage() {
     ...openTodos.map(t => ({
       type: "todo" as const,
       id: t.id,
-      title: t.title,
+      title: t.content,
       sub: t.status === "in_progress" ? "In progress" : "Pending",
       href: "/todos",
       icon: <ListTodo className="h-3.5 w-3.5 text-blue-400" />,
@@ -228,30 +243,65 @@ export default async function DashboardPage() {
             </section>
           )}
 
-          {/* Projects quick-jump */}
-          {projects.length > 0 && (
-            <section className="space-y-2">
+          {/* Workspaces + projects quick-jump */}
+          {(workspaces.length > 0 || projects.length > 0) && (
+            <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <FolderOpen className="h-3 w-3" /> Projects
+                  <Layers className="h-3 w-3" /> Workspaces
                 </h2>
-                <Link href="/projects" className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">All</Link>
+                <Link href="/workspaces" className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">All</Link>
               </div>
-              <div className="space-y-1">
-                {projects.map(p => {
-                  const projectMissions = missions.filter(m => m.projectId === p.id)
-                  const projectKnowledge = knowledge.filter(k => k.projectId === p.id)
-                  return (
-                    <Link key={p.id} href={`/projects/${p.id}`}>
-                      <div className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-secondary/50 transition-colors">
-                        <div className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: p.color ?? "#6b7280" }} />
-                        <span className="text-xs font-medium flex-1 truncate">{p.name}</span>
-                        <span className="text-[11px] text-muted-foreground">{projectMissions.length}m · {projectKnowledge.length}k</span>
+
+              {workspaces.map(ws => {
+                const counts = countForWorkspace(ws)
+                if (ws.projects.length === 0 && counts.missions === 0 && counts.knowledge === 0) return null
+                return (
+                  <div key={ws.id} className="space-y-1">
+                    <Link href="/workspaces">
+                      <div className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-secondary/50 transition-colors">
+                        <div className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: ws.color ?? "#8b5cf6" }} />
+                        <span className="text-xs font-semibold flex-1 truncate">{ws.name}</span>
+                        <span className="text-[11px] text-muted-foreground">{counts.missions}m · {counts.knowledge}k</span>
                       </div>
                     </Link>
-                  )
-                })}
-              </div>
+                    <div className="space-y-0.5 pl-3 border-l border-border/50 ml-2">
+                      {ws.projects.map(p => {
+                        const pc = countForProject(p.id)
+                        return (
+                          <Link key={p.id} href={`/projects/${p.id}`}>
+                            <div className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-secondary/50 transition-colors">
+                              <div className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: p.color ?? "#6b7280" }} />
+                              <span className="text-xs flex-1 truncate">{p.name}</span>
+                              <span className="text-[11px] text-muted-foreground">{pc.missions}m · {pc.knowledge}k</span>
+                            </div>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+
+              {unassignedProjects.length > 0 && (
+                <div className="space-y-1">
+                  {workspaces.length > 0 && (
+                    <p className="text-[11px] text-muted-foreground px-2">Unassigned</p>
+                  )}
+                  {unassignedProjects.map(p => {
+                    const pc = countForProject(p.id)
+                    return (
+                      <Link key={p.id} href={`/projects/${p.id}`}>
+                        <div className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-secondary/50 transition-colors">
+                          <div className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: p.color ?? "#6b7280" }} />
+                          <span className="text-xs font-medium flex-1 truncate">{p.name}</span>
+                          <span className="text-[11px] text-muted-foreground">{pc.missions}m · {pc.knowledge}k</span>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
             </section>
           )}
 

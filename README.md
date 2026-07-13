@@ -17,6 +17,7 @@ Command Center v2 is a **local-first AI mission control dashboard** built for en
 - A **mission system** — define a goal, assign a crew of AI roles, run them sequentially or in parallel with live streaming output
 - A **knowledge base** — capture architecture decisions, connection patterns, runbooks, and assumptions from every mission run. Semantic search via OpenAI embeddings.
 - **Crews & Roles** — compose teams of AI agents (Architect, Backend Engineer, QA, Security Analyst…) each with their own system prompt, tools, and behavior
+- **Workspaces** — group multiple projects/repos into a workspace; run missions scoped to an entire workspace for multi-repo tasks
 - An **ambient assistant `@lu`** — type `@lu status` in Cursor to see what's running right now, `@lu todo add`, `@lu search <query>` and more
 - A **native MCP server** — connects directly to Cursor. Ask "what missions are active?" or "search knowledge for auth" without leaving the IDE
 - **MCP integrations** — fires GitHub PRs, Jira comments, and Slack notifications on mission complete
@@ -273,7 +274,7 @@ Add to `~/.cursor/mcp.json`:
 
 Restart Cursor. The tools are now available in every chat.
 
-### Available tools (14 total)
+### Available tools (17 total)
 
 **Mission lifecycle**
 
@@ -293,6 +294,14 @@ Restart Cursor. The tools are now available in every chat.
 | `cc_get_mission` | Full detail: task graph, artifacts, Q&A |
 | `cc_list_projects` | List all projects with IDs |
 | `cc_get_project_context` | Full context dump for a project (KB + missions + todos) |
+
+**Workspaces**
+
+| Tool | What it does |
+|---|---|
+| `cc_list_workspaces` | List all workspaces with their member projects |
+| `cc_create_workspace` | Create a workspace and optionally assign projects to it |
+| `cc_open` | Auto-detect current git repo, create or open the matching project/workspace |
 
 **Todos**
 
@@ -382,10 +391,11 @@ Use **Settings → Import** to load these files into v2.
 - [x] Native MCP server — Cursor-native tool integration ✅
 - [x] Full mission lifecycle from Cursor chat (create, run, answer questions) ✅
 - [x] Export to clipboard / import from v1 files ✅
+- [x] Workspaces — group repos, multi-repo missions ✅
+- [x] `cc_open` — auto-detect git repo in Cursor and open/create project ✅
 - [ ] Deploy to Vercel (one-click)
 - [ ] Demo video
 - [ ] Mobile-friendly view
-- [ ] Slack channel + Jira URL in project settings UI
 - [ ] Real-time multi-user collaboration
 
 ---

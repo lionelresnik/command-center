@@ -23,7 +23,7 @@ function roleToV1Yaml(role: Record<string, unknown>): string {
     tools: role.tools ?? [],
     allowed_actions: role.allowedActions ?? [],
   }
-  return yaml.dump(v1, { lineWidth: 120, quotingType: '"' })
+  return yaml.dump(v1, { lineWidth: 120 })
 }
 
 function teamToV1Yaml(
@@ -45,7 +45,7 @@ function teamToV1Yaml(
     knowledge_filters: team.knowledgeFilters ?? [],
     mcps: team.mcps ?? [],
   }
-  return yaml.dump(v1, { lineWidth: 120, quotingType: '"' })
+  return yaml.dump(v1, { lineWidth: 120 })
 }
 
 // ─── Route ────────────────────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
     zip.file("command-center-v2-bundle.json", JSON.stringify(bundle, null, 2))
 
     const content = await zip.generateAsync({ type: "nodebuffer" })
-    return new Response(content, {
+    return new Response(new Uint8Array(content), {
       headers: {
         "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename="command-center-export-${new Date().toISOString().slice(0, 10)}.zip"`,

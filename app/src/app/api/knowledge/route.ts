@@ -15,8 +15,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    if (!body.projectId || !body.title || !body.content || !body.type) {
-      return NextResponse.json({ error: "projectId, title, content, type required" }, { status: 400 })
+    if (!body.title || !body.content || !body.type) {
+      return NextResponse.json({ error: "title, content, type required" }, { status: 400 })
+    }
+    if (!body.projectId && !body.workspaceId) {
+      return NextResponse.json({ error: "projectId or workspaceId required" }, { status: 400 })
     }
     const entry = await createKnowledgeEntry(body)
     // Fire-and-forget embedding (no API key = silently skipped)

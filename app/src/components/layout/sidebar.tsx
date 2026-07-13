@@ -60,7 +60,6 @@ export function Sidebar() {
     {showEasterEgg && (
       <div
         className="fixed inset-0 z-[100] flex items-center justify-center"
-        onClick={() => setShowEasterEgg(false)}
       >
         <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
 
@@ -155,7 +154,6 @@ export function Sidebar() {
           </div>
           <p className="text-[10px] text-zinc-600 mt-2">*approximate</p>
 
-          <p className="text-[11px] text-zinc-600 mt-4">Click anywhere to close</p>
         </div>
       </div>
     )}

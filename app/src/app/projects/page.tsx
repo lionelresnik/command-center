@@ -17,7 +17,7 @@ export default async function ProjectsPage() {
   const allKnowledge = await getKnowledgeEntries()
 
   const knowledgeCountByProject = allKnowledge.reduce<Record<string, number>>((acc, k) => {
-    acc[k.projectId] = (acc[k.projectId] ?? 0) + 1
+    if (k.projectId) acc[k.projectId] = (acc[k.projectId] ?? 0) + 1
     return acc
   }, {})
 

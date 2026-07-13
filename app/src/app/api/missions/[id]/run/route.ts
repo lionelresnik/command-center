@@ -105,7 +105,7 @@ export async function POST(
         const temperature = role?.temperature ?? 0.7
 
         // Build context from knowledge base
-        const knowledge = await getKnowledgeEntries(mission.projectId)
+        const knowledge = await getKnowledgeEntries(mission.projectId ?? undefined)
         const knowledgeContext = knowledge.length > 0
           ? `\n\n## Project Knowledge Base\n${knowledge.slice(0, 10).map(k => `### ${k.title}\n${k.content}`).join("\n\n")}`
           : ""
