@@ -38,33 +38,39 @@ Command Center v2 is a **local-first AI mission control dashboard** built for en
 
 ## Screenshots
 
+_Click any image to view full size._
+
 ### Dashboard — Mission Control
 
-![Dashboard — active missions, stats, workspaces sidebar](docs/screenshots/dashboard.png)
+[![Dashboard — active missions, stats, workspaces sidebar](docs/screenshots/dashboard.png)](docs/screenshots/dashboard.png)
 
 ### Workspaces
 
-![Workspaces — group projects into multi-repo scopes](docs/screenshots/workspaces.png)
+[![Workspaces — group projects into multi-repo scopes](docs/screenshots/workspaces.png)](docs/screenshots/workspaces.png)
 
 ### Projects
 
-![Projects — repo links, knowledge counts, AGENTS.md status](docs/screenshots/projects.png)
+[![Projects — repo links, knowledge counts, AGENTS.md status](docs/screenshots/projects.png)](docs/screenshots/projects.png)
+
+### Project detail — AGENTS.md editor
+
+[![AGENTS.md editor — context file read by AI agents before every mission](docs/screenshots/project-agents-md.png)](docs/screenshots/project-agents-md.png)
 
 ### Crews
 
-![Crews — compose teams with roles and workflow steps](docs/screenshots/crews.png)
+[![Crews — compose teams with roles and workflow steps](docs/screenshots/crews.png)](docs/screenshots/crews.png)
 
 ### Roles
 
-![Roles — system prompts, models, tools, and memory scope per agent](docs/screenshots/roles.png)
+[![Roles — system prompts, models, tools, and memory scope per agent](docs/screenshots/roles.png)](docs/screenshots/roles.png)
 
 ### Missions
 
-![Missions — filter by workspace, project, and status](docs/screenshots/missions.png)
+[![Missions — filter by workspace, project, and status](docs/screenshots/missions.png)](docs/screenshots/missions.png)
 
 ### Knowledge Base
 
-![Knowledge Base — entries grouped by project with semantic search](docs/screenshots/knowledge.png)
+[![Knowledge Base — entries grouped by project with semantic search](docs/screenshots/knowledge.png)](docs/screenshots/knowledge.png)
 
 ---
 
