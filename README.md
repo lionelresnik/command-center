@@ -40,84 +40,31 @@ Command Center v2 is a **local-first AI mission control dashboard** built for en
 
 ### Dashboard — Mission Control
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ 🎯 Mission Control          Monday, Jul 13, 2026                │
-│                                                                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────────┐  │
-│  │ 2 Active │ │ 12 Done  │ │ 31 Knowl.│ │ $0.042 AI spend  │  │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────────────┘  │
-│                                                                  │
-│  Active Missions                          Needs Attention (3)   │
-│  ┌────────────────────────────────┐       ┌───────────────────┐ │
-│  │ 🔄 JWT Auth Refresh Loop Fix  │       │ ⚠ Rate limiting   │ │
-│  │ Architect → Backend → QA      │       │ ⚠ Events queue    │ │
-│  │ ████████░░░░ 65%              │       │ ⚡ 2 open todos   │ │
-│  └────────────────────────────────┘       └───────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-```
+![Dashboard — active missions, stats, workspaces sidebar](docs/screenshots/dashboard.png)
 
-### Mission Detail — Live Streaming
+### Workspaces
 
-```
-┌───────────────────────────────────────────────────────────────────┐
-│ ← JWT Auth Refresh Loop Fix  [Running]  PLAT-441  #platform-api  │
-│ Fix the infinite 401 loop when JWT expires during active session  │
-│ ████████████░░░░░░░░ 60%                          1,247 tokens   │
-├──────────────┬────────────────────────────────────────────────────┤
-│  Agents      │  ● Live Log                        ▼ 4 events     │
-│              │  ┌──────────────────────────────────────────────┐  │
-│  ✓ Architect │  │ 14:22:01  ▶ Starting Backend Engineer…       │  │
-│  │           │  │ 14:22:02  The issue is in auth.middleware.ts  │  │
-│  ⟳ Backend  │  │           The /refresh endpoint needs to be  │  │
-│  │           │  │           excluded from JWT verification…    │  │
-│  ○ QA        │  └──────────────────────────────────────────────┘  │
-│              │                                                    │
-│  Behavior    │  Backend Engineer — implement                      │
-│  [Assume ✓]  │  ─────────────────────────────────────────────     │
-│  [Ask me  ]  │  ## Implementation Plan                           │
-│  [Async   ]  │  1. Add /refresh to auth bypass list             │
-│              │  2. Handle 401 with token refresh retry logic    │
-└──────────────┴────────────────────────────────────────────────────┘
-```
+![Workspaces — group projects into multi-repo scopes](docs/screenshots/workspaces.png)
 
-### Knowledge Base — Grouped by Project
+### Projects
 
-```
-┌────────────────────────────────────────────────────────────┐
-│ Knowledge Base            5 entries · 1 assumed            │
-│                                      [+ Add entry]         │
-├────────────────────────────────────────────────────────────┤
-│ [All projects] [● Platform API (3)] [● Auth Service (2)]   │
-│                                                            │
-│ ● Platform API  3 entries  ⚠ 1 assumed          [▼]       │
-│ ├── ✓ Postgres — main DB connection pattern   [database]  │
-│ ├── ✓ events-queue — async processing         [infra]     │
-│ └── ⚠ Rate limiting — per-tenant assumption   [arch] Confirm│
-│                                                            │
-│ ● Auth Service  2 entries                       [▼]       │
-│ ├── ✓ JWT refresh loop root cause              [arch]     │
-│ └── ✓ Log groups — service naming convention   [logs]     │
-└────────────────────────────────────────────────────────────┘
-```
+![Projects — repo links, knowledge counts, AGENTS.md status](docs/screenshots/projects.png)
 
-### Crews — Full CRUD
+### Crews
 
-```
-┌─────────────────────────────────────────────────────────┐
-│ Crews                              [+ New Crew]         │
-├─────────────────────────────────────────────────────────┤
-│ 👥 Backend Crew                              [✎] [Use] │
-│ Full backend feature development             Built-in   │
-│ [Architect] [Backend] [QA] [Security]                   │
-│ plan → implement → test → audit → review                │
-├─────────────────────────────────────────────────────────┤
-│ 👥 Bug Hunter                                [✎] [Use] │
-│ Rapid bug investigation — no ceremonies      Built-in   │
-│ [Architect] [Backend] [QA]                              │
-│ investigate → fix → verify                              │
-└─────────────────────────────────────────────────────────┘
-```
+![Crews — compose teams with roles and workflow steps](docs/screenshots/crews.png)
+
+### Roles
+
+![Roles — system prompts, models, tools, and memory scope per agent](docs/screenshots/roles.png)
+
+### Missions
+
+![Missions — filter by workspace, project, and status](docs/screenshots/missions.png)
+
+### Knowledge Base
+
+![Knowledge Base — entries grouped by project with semantic search](docs/screenshots/knowledge.png)
 
 ---
 
