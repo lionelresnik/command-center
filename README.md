@@ -9,6 +9,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://typescriptlang.org)
 [![MCP](https://img.shields.io/badge/MCP-Cursor_native-purple.svg)](https://modelcontextprotocol.io)
 
+[![Command Center v2 — AI Engineering Operating System overview](docs/screenshots/overview.png)](docs/screenshots/overview.png)
+
 ---
 
 ## Live demo
