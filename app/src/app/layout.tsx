@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Command Center",
-  description: "AI mission control — missions, teams, knowledge, @lu",
+  description: "Orchestrate AI agent crews across workspaces and projects — missions and knowledge.",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

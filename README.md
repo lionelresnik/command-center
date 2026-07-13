@@ -1,6 +1,6 @@
 # 🎯 Command Center
 
-> **AI mission control for engineering teams** — run multi-agent missions, capture knowledge, manage crews, and ship faster.
+> **Orchestrate crews of AI agents across workspaces and projects** — complete missions and build your knowledge base.
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/lionelresnik/command-center)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)

@@ -1,6 +1,6 @@
 # Command Center — Complete Documentation
 
-> Mission control for AI engineering teams using Cursor.
+> Orchestrate crews of AI agents across workspaces and projects — complete missions and build your knowledge base.
 > Orchestrate multi-agent AI workflows, manage your knowledge base, and stay in flow.
 
 ---
