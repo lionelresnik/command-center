@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import { apiFetch } from "@/lib/api-client"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -183,7 +184,7 @@ export default function MissionDetailPage() {
 
   const loadMission = useCallback(async () => {
     try {
-      const res = await fetch(`/api/missions/${id}`)
+      const res = await apiFetch(`/api/missions/${id}`)
       if (!res.ok) { router.push("/missions"); return }
       const data = await res.json()
       setMission(data)
@@ -204,7 +205,7 @@ export default function MissionDetailPage() {
     setRunning(true)
 
     try {
-      const res = await fetch(`/api/missions/${id}/run`, { method: "POST" })
+      const res = await apiFetch(`/api/missions/${id}/run`, { method: "POST" })
       if (!res.body) throw new Error("no stream")
 
       const reader = res.body.getReader()
@@ -502,7 +503,7 @@ export default function MissionDetailPage() {
                   key={b}
                   disabled={mission.status === "done" || running}
                   onClick={async () => {
-                    await fetch(`/api/missions/${id}`, {
+                    await apiFetch(`/api/missions/${id}`, {
                       method: "PATCH",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ agentBehavior: b }),

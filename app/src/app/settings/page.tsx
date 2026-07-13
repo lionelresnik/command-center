@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { apiFetch } from "@/lib/api-client"
 
 const luCommands = [
   { command: "@lu status",        description: "Active missions, top todos, today's log count",        editable: false },
@@ -51,8 +52,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/settings").then(r => r.json()),
-      fetch("/api/mcp/status").then(r => r.json()).catch(() => null),
+      apiFetch("/api/settings").then(r => r.json()),
+      apiFetch("/api/mcp/status").then(r => r.json()).catch(() => null),
     ]).then(([d, mcp]) => {
       setSettings(d)
       setMcpStatus(mcp)
@@ -71,7 +72,7 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     setSaving(true)
-    await fetch("/api/settings", {
+    await apiFetch("/api/settings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(settings),
@@ -87,7 +88,7 @@ export default function SettingsPage() {
     try {
       const form = new FormData()
       form.append("file", file)
-      const res = await fetch("/api/import", { method: "POST", body: form })
+      const res = await apiFetch("/api/import", { method: "POST", body: form })
       const data = await res.json()
       setImportResult(data)
     } catch (e) {

@@ -42,6 +42,5 @@ yarn-error.log*
 # vercel
 .vercel
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# demo bundle (generated at CI build — not committed)
+/public/demo-bundle.json
