@@ -34,6 +34,8 @@ Command Center is a **local-first AI mission control dashboard** built for engin
 - **MCP integrations** — fires GitHub PRs, Jira comments, and Slack notifications on mission complete
 - Full **import/export** compatible with v1 CLI YAML files
 
+[![Command Center — AI Engineering Operating System](docs/screenshots/overview.png)](docs/screenshots/overview.png)
+
 ---
 
 ## Screenshots
@@ -67,12 +69,6 @@ _Click any image to view full size._
 ### Missions
 
 [![Missions — filter by workspace, project, and status](docs/screenshots/missions.png)](docs/screenshots/missions.png)
-
----
-
-## Overview
-
-[![Command Center — AI Engineering Operating System](docs/screenshots/overview.png)](docs/screenshots/overview.png)
 
 ---
 
