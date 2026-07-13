@@ -9,8 +9,6 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://typescriptlang.org)
 [![MCP](https://img.shields.io/badge/MCP-Cursor_native-purple.svg)](https://modelcontextprotocol.io)
 
-[![Command Center v2 — AI Engineering Operating System overview](docs/screenshots/overview.png)](docs/screenshots/overview.png)
-
 ---
 
 ## Live demo
@@ -25,7 +23,7 @@ Built from the local `demo` branch (static export + sample workspace). The full 
 
 ## What is this?
 
-Command Center v2 is a **local-first AI mission control dashboard** built for engineers who use AI agents (Cursor, Claude, GPT) daily. It gives you:
+Command Center is a **local-first AI mission control dashboard** built for engineers who use AI agents (Cursor, Claude, GPT) daily. It gives you:
 
 - A **mission system** — define a goal, assign a crew of AI roles, run them sequentially or in parallel with live streaming output
 - A **knowledge base** — capture architecture decisions, connection patterns, runbooks, and assumptions from every mission run. Semantic search via OpenAI embeddings.
@@ -69,10 +67,6 @@ _Click any image to view full size._
 ### Missions
 
 [![Missions — filter by workspace, project, and status](docs/screenshots/missions.png)](docs/screenshots/missions.png)
-
-### Knowledge Base
-
-[![Knowledge Base — entries grouped by project with semantic search](docs/screenshots/knowledge.png)](docs/screenshots/knowledge.png)
 
 ---
 
@@ -206,7 +200,7 @@ Export everything as:
 - **YAML ZIP** — v1-compatible role/team YAML files + JSON bundle
 
 Import from:
-- v2 JSON bundle
+- **JSON bundle** — full portable backup of all data
 - v1 role YAML (`cursor/roles/*.yaml`)
 - v1 team YAML (`cursor/teams/*.yaml`)
 - ZIP containing any of the above
@@ -289,13 +283,15 @@ Restart Cursor. The tools are now available in every chat.
 | Tool | What it does |
 |---|---|
 | `cc_export` | Export project data as markdown — paste into Claude.ai, ChatGPT, etc. |
-| `cc_import_v1` | Migrate v1 files (`todos.md`, `daily-log/`, `task-history/`) into v2 DB |
+| `cc_import_v1` | Migrate v1 files (`todos.md`, `daily-log/`, `task-history/`) into the database |
 
 ### Full mission flow from Cursor chat
 
+You **don't type** `cc_create_mission` — just speak naturally. Cursor's agent picks the MCP tool. (`@lu` is separate; see below.)
+
 ```
 "create mission: fix the JWT refresh bug, use Bug Hunter crew, project Platform API"
-→ cc_create_mission — mission created, task graph shown
+→ cc_create_mission (called automatically) — mission created, task graph shown
 
 "run it"
 → cc_run_mission — Architect role executes, artifact preview returned
@@ -310,6 +306,8 @@ Restart Cursor. The tools are now available in every chat.
 "run it again"
 → cc_run_mission — Backend Engineer runs with your answer as context
 ```
+
+**`@lu` vs MCP:** `@lu status`, `@lu todo add`, `@lu search` are slash-style commands on the Lucius agent (`cursor/agents/lucius.md`). Mission create/run uses **MCP tools** in any Cursor chat where the Command Center MCP server is connected — natural language, no `cc_` prefix needed. `@lu new mission` only opens the web form; it does not run the full MCP flow above.
 
 ### Example queries
 
@@ -348,7 +346,7 @@ workflow:
   - implement
 ```
 
-Use **Settings → Import** to load these files into v2.
+Use **Settings → Import** to load these files into Command Center.
 
 ---
 

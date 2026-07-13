@@ -1,4 +1,4 @@
-# Command Center v2 — Complete Documentation
+# Command Center — Complete Documentation
 
 > An AI Engineering Operating System built for engineering teams using Cursor.
 > Orchestrate multi-agent AI workflows, manage your knowledge base, and stay in flow.
@@ -7,7 +7,7 @@
 
 ## Table of Contents
 
-1. [What is Command Center v2?](#what)
+1. [What is Command Center?](#what)
 2. [Why it exists — the problem it solves](#why)
 3. [Architecture decisions](#architecture)
 4. [Core concepts](#concepts)
@@ -22,9 +22,9 @@
 
 ---
 
-## 1. What is Command Center v2? {#what}
+## 1. What is Command Center? {#what}
 
-Command Center v2 is a **local-first AI engineering OS** — a web dashboard + Cursor integration that lets you:
+Command Center is a **local-first AI engineering OS** — a web dashboard + Cursor integration that lets you:
 
 - Define **Missions**: a goal, a Jira ticket, a project, and a crew of AI agents to accomplish it
 - Watch AI agents (Architect, Backend Engineer, QA, Security Analyst, Docs) execute the mission step by step, producing real artifacts
@@ -49,7 +49,7 @@ Engineering teams using AI agents face three compounding problems:
 
 ### The solution
 
-Command Center v2 solves all three:
+Command Center solves all three:
 
 1. **Persistent knowledge**: every insight gets captured to a semantic knowledge base. Every agent reads it before starting.
 2. **Mission orchestration**: declare a crew of roles with sequential dependencies. One click runs the whole pipeline.

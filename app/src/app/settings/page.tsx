@@ -325,7 +325,7 @@ export default function SettingsPage() {
             Import / Export
           </CardTitle>
           <CardDescription className="text-xs">
-            Move data between Command Center instances. Compatible with v1 CLI YAML files and v2 JSON bundles.
+            Move data between Command Center instances. Compatible with v1 CLI YAML files and JSON bundles.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -413,7 +413,7 @@ export default function SettingsPage() {
             )}
 
             <div className="text-[11px] text-muted-foreground space-y-0.5">
-              <p>• <strong>v2 JSON</strong>: Full bundle exported from this app</p>
+              <p>• <strong>JSON bundle</strong>: Full export from this app</p>
               <p>• <strong>v1 YAML</strong>: Role or team files from the v1 CLI/plugin (<code>cursor/roles/*.yaml</code>, <code>cursor/teams/*.yaml</code>)</p>
               <p>• <strong>ZIP</strong>: Bundle containing v1 YAML files + optional JSON bundle</p>
               <p className="text-muted-foreground/60 pt-1">Existing records are updated; new records are added. Nothing is deleted.</p>

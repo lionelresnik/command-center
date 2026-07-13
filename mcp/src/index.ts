@@ -1178,7 +1178,7 @@ server.tool(
 
 server.tool(
   "cc_import_v1",
-  "Import data from v1 Command Center files (~/.command-center/todos.md, daily-log/*.jsonl, task-history/**/*.md) into the v2 database. Skips duplicates.",
+  "Import data from v1 Command Center files (~/.command-center/todos.md, daily-log/*.jsonl, task-history/**/*.md) into the database. Skips duplicates.",
   {
     what: z.array(z.enum(["todos", "daily_logs", "task_history"])).optional()
       .describe("What to import. Defaults to all three."),

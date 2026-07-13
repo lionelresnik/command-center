@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/components/layout/theme-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Command Center v2",
+  title: "Command Center",
   description: "AI Engineering OS — missions, teams, knowledge, @lu",
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "command-center-mcp",
   "version": "1.0.0",
-  "description": "MCP server for Command Center v2 — exposes missions, knowledge, todos, and projects as Cursor tools",
+  "description": "MCP server for Command Center — exposes missions, knowledge, todos, and projects as Cursor tools",
   "main": "dist/index.js",
   "bin": {
     "cc-mcp": "dist/index.js"
