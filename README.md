@@ -70,6 +70,12 @@ _Click any image to view full size._
 
 ---
 
+## Overview
+
+[![Command Center — AI Engineering Operating System](docs/screenshots/overview.png)](docs/screenshots/overview.png)
+
+---
+
 ## Architecture
 
 ```
