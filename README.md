@@ -1,5 +1,9 @@
 # 🎯 Command Center
 
+> **Deprecated:** This project is superseded by **[Mission Control](https://github.com/lionelresnik/mission-control)**.  
+> No further updates. Kept for reference and rollback only.  
+> **New demo:** [https://lionelresnik.github.io/mission-control/](https://lionelresnik.github.io/mission-control/)
+
 > **Orchestrate crews of AI agents across workspaces and projects** — complete missions and build your knowledge base.
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/lionelresnik/command-center)
